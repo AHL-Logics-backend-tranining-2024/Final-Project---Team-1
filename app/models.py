@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr, Field
 from passlib.context import CryptContext
 
+#Set up password hashing context using bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class UserBase(BaseModel):
@@ -14,6 +15,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+#Inheriting from UserBase
 class User(UserBase):
     id: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -21,7 +23,8 @@ class User(UserBase):
 
     def get_password_hash(self):
         return pwd_context.hash(self.password)
-
+    
+    #Method to verify if the provided password matches the hashed password
     def verify_password(self, password: str):
         return pwd_context.verify(password, self.get_password_hash())
     
