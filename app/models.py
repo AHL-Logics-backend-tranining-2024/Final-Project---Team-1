@@ -1,25 +1,36 @@
+import re
 from uuid import UUID, uuid4
-from datetime import datetime, timezone
-from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from passlib.context import CryptContext
 
 #Set up password hashing context using bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-class UserBase(BaseModel):
+
+password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$"
+
+class UserBaseModel(BaseModel):
     username: str
     email: EmailStr
     is_admin: bool = False
     is_active: bool = True
 
-class UserCreate(UserBase):
+class UserCreateRequestModel(UserBaseModel):
     password: str
+    @field_validator('password')
+    def validate_password(cls, value):
+        if not re.match(password_regex, value):
+            raise ValueError(
+                "Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
+            )
+        return value
 
-#Inheriting from UserBase
-class User(UserBase):
+#Inheriting from UserBaseModel
+class User(UserBaseModel):
     id: UUID = Field(default_factory=uuid4)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default=None)
 
     def get_password_hash(self):
         return pwd_context.hash(self.password)
@@ -28,13 +39,3 @@ class User(UserBase):
     def verify_password(self, password: str):
         return pwd_context.verify(password, self.get_password_hash())
     
-    def to_dict(self):
-        return {
-            "id": str(self.id),
-            "username": self.username,
-            "email": self.email,
-            "is_admin": self.is_admin,
-            "is_active": self.is_active,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
-        }
