@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from models import UserCreateRequestModel, User  
+from models import UserCreateRequestModel, User ,UserCreateResponseModel 
 
 router = APIRouter()
 
@@ -7,7 +7,7 @@ router = APIRouter()
 users_db = {}
 
 
-@router.post("/users/", response_model=User, status_code=status.HTTP_201_CREATED)
+@router.post("/users/", response_model=UserCreateResponseModel, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreateRequestModel):
 
     #Check if the email already exists

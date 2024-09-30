@@ -17,14 +17,15 @@ class UserBaseModel(BaseModel):
     is_active: bool = True
 
 class UserCreateRequestModel(UserBaseModel):
-    password: str
-    @field_validator('password')
-    def validate_password(cls, value):
-        if not re.match(password_regex, value):
-            raise ValueError(
-                "Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
-            )
-        return value
+    password: str = Field(
+        ...,
+        min_length=8,
+        pattern=password_regex,
+        description="Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
+    )
+
+class UserCreateResponseModel(UserBaseModel):
+    id: UUID
 
 #Inheriting from UserBaseModel
 class User(UserBaseModel):
