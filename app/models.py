@@ -11,20 +11,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$"
 
 class UserBaseModel(BaseModel):
-    username: str
-    email: EmailStr
-    is_admin: bool = False
-    is_active: bool = True
+    username: str = Field(..., description="The username of the user.")
+    email: EmailStr = Field(..., description="The email address of the user.")
 
-class UserCreateRequestModel(BaseModel):
-    username: str = Field(
-        ...,
-        description="The chosen username here"
-    )
-    email: EmailStr = Field(
-        ...,
-        description="The email address here"
-    )
+class UserCreateRequestModel(UserBaseModel):
     password: str = Field(
         ...,
         min_length=8,
@@ -34,14 +24,19 @@ class UserCreateRequestModel(BaseModel):
 
 class UserCreateResponseModel(UserBaseModel):
     id: UUID
+    is_admin: bool = Field(default=False, description="Admin privileges.")
+    is_active: bool = Field(default=True, description="Account active status.")
     created_at: datetime
-
+    updated_at: datetime = None
 
 #Inheriting from UserBaseModel
 class User(UserBaseModel):
     id: UUID = Field(default_factory=uuid4)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default=None)
+    hashed_password: str = Field(..., description="The hashed password ")
+    is_admin: bool = Field(default=False, description="Admin privileges.")
+    is_active: bool = Field(default=True, description="Account active status.")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="User creation timestamp.")
+    updated_at: datetime = Field(default=None, description="Last updated timestamp.")
 
     def get_password_hash(self):
         return pwd_context.hash(self.password)
