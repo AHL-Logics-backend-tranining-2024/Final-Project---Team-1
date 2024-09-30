@@ -2,12 +2,15 @@ from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from typing import Optional
 import os
-
-# Load environment variables (if using dotenv)
+from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
+
 load_dotenv()
 
-# JWT settings
+# Define the OAuth2 scheme
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+#JWT settings
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))

@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from models import Token, pwd_context, create_access_token
+from fastapi.security import  OAuth2PasswordRequestForm
+from app.api.auth_utlis import create_access_token
+from models import Token, pwd_context
 from user import users_db
 from datetime import timedelta
 
+
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
 
 #POST /login
 @router.post("/login", response_model=Token)

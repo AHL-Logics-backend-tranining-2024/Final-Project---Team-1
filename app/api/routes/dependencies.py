@@ -1,11 +1,11 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from models import TokenData
-from api.auth_utlis import verify_token
+from models import TokenData 
+from api.auth_utlis import verify_token, oauth2_scheme
 from user import users_db  
 from uuid import UUID
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+
 
 #Dependency to get the current user
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
@@ -65,3 +65,5 @@ async def get_current_admin(current_user: TokenData = Depends(get_current_active
             detail=f"An error occurred while checking admin privileges: {str(e)}"
         )
     return user
+
+
