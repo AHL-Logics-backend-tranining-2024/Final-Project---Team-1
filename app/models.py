@@ -19,18 +19,26 @@ class UserBaseModel(BaseModel):
     is_admin: bool = False
     is_active: bool = True
 
-class UserCreateRequestModel(UserBaseModel):
-    password: str
-    @field_validator('password')
-    def validate_password(cls, value):
-        if not re.match(password_regex, value):
-            raise ValueError(
-                "Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
-            )
-        return value
-    
-    def get_password_hash(self):
-        return pwd_context.hash(self.password)
+class UserResponseModel(UserBaseModel):
+    id: UUID
+    created_at: datetime
+
+class UserCreateRequestModel(BaseModel):
+    username: str = Field(
+        ...,
+        description="The customer's chosen username."
+    )
+    email: EmailStr = Field(
+        ...,
+        description="The customer's email address."
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        regex=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$",
+        description="The password, which must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
+    )
+
 
 #Inheriting from UserBaseModel
 class User(UserBaseModel):
@@ -38,10 +46,6 @@ class User(UserBaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default=None)
 
-    
-    #Method to verify if the provided password matches the hashed password
-    def verify_password(self, password: str):
-        return pwd_context.verify(password, self.get_password_hash())
     
 
 
@@ -51,6 +55,6 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: Optional[UUID] = None
+    user_id: Optional[UUID] = None
 
 

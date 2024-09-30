@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
-from models import UserCreateRequestModel, User  
+from models import UserCreateRequestModel, User 
+from api.auth_utlis import get_password_hash 
 
 router = APIRouter()
 
@@ -21,7 +22,7 @@ async def create_user(user: UserCreateRequestModel):
     new_user = User(
         username=user.username,
         email=user.email,
-        password=user.password.get_password_hash()
+        password=get_password_hash(user.password)
     )
     users_db[str(new_user.id)] = new_user  
 

@@ -18,21 +18,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     try:
         #Try to verify the token
         username = verify_token(token, credentials_exception)
-    except HTTPException:
-        raise credentials_exception
-    
-    try:
+
         #Fetch the user
         user = next((u for u in users_db.values() if str(u.id) == username), None)
         if user is None or not user.is_active:
             raise credentials_exception
+        
+        return TokenData(username=UUID(username))
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {str(e)}"
         )
     
-    return TokenData(username=UUID(username))
 
 #Dependency to get current active user
 async def get_current_active_user(current_user: TokenData = Depends(get_current_user)):
