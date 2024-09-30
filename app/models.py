@@ -16,7 +16,15 @@ class UserBaseModel(BaseModel):
     is_admin: bool = False
     is_active: bool = True
 
-class UserCreateRequestModel(UserBaseModel):
+class UserCreateRequestModel(BaseModel):
+    username: str = Field(
+        ...,
+        description="The chosen username here"
+    )
+    email: EmailStr = Field(
+        ...,
+        description="The email address here"
+    )
     password: str = Field(
         ...,
         min_length=8,
@@ -26,6 +34,8 @@ class UserCreateRequestModel(UserBaseModel):
 
 class UserCreateResponseModel(UserBaseModel):
     id: UUID
+    created_at: datetime
+
 
 #Inheriting from UserBaseModel
 class User(UserBaseModel):
