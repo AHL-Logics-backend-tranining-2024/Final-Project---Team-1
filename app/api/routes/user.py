@@ -21,7 +21,7 @@ async def create_user(user: UserCreateRequestModel):
     new_user = User(
         username=user.username,
         email=user.email,
-        password=user.password  
+        password=user.password.get_password_hash()
     )
     users_db[str(new_user.id)] = new_user  
 
