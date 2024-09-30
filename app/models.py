@@ -27,7 +27,6 @@ class UserCreateResponseModel(UserBaseModel):
     is_admin: bool = Field(default=False, description="Admin privileges.")
     is_active: bool = Field(default=True, description="Account active status.")
     created_at: datetime
-    updated_at: datetime = None
 
 #Inheriting from UserBaseModel
 class User(UserBaseModel):
