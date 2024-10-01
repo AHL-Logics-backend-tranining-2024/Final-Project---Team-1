@@ -8,6 +8,7 @@ load_dotenv()
 
 
 
+
 password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$"
 
 class UserBaseModel(BaseModel):
@@ -50,5 +51,6 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[UUID] = None
+
 
 

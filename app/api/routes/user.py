@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from models import UserCreateRequestModel, User, UserCreateResponseModel 
 from api.auth_utlis import get_password_hash
 
+
 router = APIRouter()
 
 
@@ -35,3 +36,4 @@ async def create_user(user: UserCreateRequestModel):
         is_active=new_user.is_active,
         created_at=new_user.created_at
     )
+
