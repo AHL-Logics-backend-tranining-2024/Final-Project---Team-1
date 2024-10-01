@@ -2,49 +2,43 @@ import re
 from typing import Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timedelta, timezone
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from passlib.context import CryptContext
+from pydantic import BaseModel, EmailStr, Field
 from dotenv import load_dotenv
 load_dotenv()
 
-#Set up password hashing context using bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$"
 
 class UserBaseModel(BaseModel):
-    username: str
-    email: EmailStr
-    is_admin: bool = False
-    is_active: bool = True
+    username: str = Field(..., description="The username of the user.")
+    email: EmailStr = Field(..., description="The email address of the user.")
 
-class UserResponseModel(UserBaseModel):
-    id: UUID
-    created_at: datetime
 
-class UserCreateRequestModel(BaseModel):
-    username: str = Field(
-        ...,
-        description="The customer's chosen username."
-    )
-    email: EmailStr = Field(
-        ...,
-        description="The customer's email address."
-    )
+#Inheriting from UserBaseModel
+class UserCreateRequestModel(UserBaseModel):
     password: str = Field(
         ...,
         min_length=8,
-        regex=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$",
-        description="The password, which must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one digit, and one special character."
+        pattern=password_regex,
+        description="Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
     )
 
+#Inheriting from UserBaseModel
+class UserCreateResponseModel(UserBaseModel):
+    id: UUID
+    is_admin: bool = Field(default=False, description="Admin privileges.")
+    is_active: bool = Field(default=True, description="Account active status.")
+    created_at: datetime
 
 #Inheriting from UserBaseModel
 class User(UserBaseModel):
     id: UUID = Field(default_factory=uuid4)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default=None)
+    hashed_password: str = Field(..., description="The hashed password ")
+    is_admin: bool = Field(default=False, description="Admin privileges.")
+    is_active: bool = Field(default=True, description="Account active status.")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="User creation timestamp.")
+    updated_at: datetime = Field(default=None, description="Last updated timestamp.")
 
     
 

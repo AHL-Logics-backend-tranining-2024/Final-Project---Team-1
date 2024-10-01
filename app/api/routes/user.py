@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
-from models import UserCreateRequestModel, User 
-from api.auth_utlis import get_password_hash 
+from models import UserCreateRequestModel, User, UserCreateResponseModel 
+from api.auth_utlis import get_password_hash
 
 router = APIRouter()
 
@@ -8,7 +8,7 @@ router = APIRouter()
 users_db = {}
 
 
-@router.post("/users/", response_model=User, status_code=status.HTTP_201_CREATED)
+@router.post("/users/", response_model=UserCreateResponseModel, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreateRequestModel):
 
     #Check if the email already exists
@@ -27,5 +27,11 @@ async def create_user(user: UserCreateRequestModel):
     users_db[str(new_user.id)] = new_user  
 
     #Return the created user without the password
-    return new_user
-
+    return UserCreateResponseModel(
+        id=new_user.id,
+        username=new_user.username,
+        email=new_user.email,
+        is_admin=new_user.is_admin,
+        is_active=new_user.is_active,
+        created_at=new_user.created_at
+    )
