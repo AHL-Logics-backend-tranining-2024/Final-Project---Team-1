@@ -4,10 +4,13 @@ from models import TokenData, User
 from api.auth_utlis import verify_token, oauth2_scheme
 from user import users_db  
 from uuid import UUID
+from datetime import datetime
 
 
 
 users_db: Dict[str, User] = {}
+statuses : Dict[UUID,Dict]={}
+orders_db: Dict[UUID, Dict] = {}
 
 #Dependency to get the current user
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
@@ -77,4 +80,6 @@ async def get_user_by_username(username: str) -> User:
         )
     return user
 
+def get_current_time():
+    return datetime.utcnow().isoformat()
 

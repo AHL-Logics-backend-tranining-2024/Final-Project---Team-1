@@ -15,7 +15,11 @@ class UserBaseModel(BaseModel):
     username: str = Field(..., description="The username of the user.")
     email: EmailStr = Field(..., description="The email address of the user.")
 
+class StatusCreate(BaseModel):
+    name:str=Field(...,description="Status name example (pending, processing, completed, canceled)")
 
+class StatusUpdate(BaseModel):
+    name :str=Field(...,description="Updated status name")
 #Inheriting from UserBaseModel
 class UserCreateRequestModel(UserBaseModel):
     password: str = Field(
