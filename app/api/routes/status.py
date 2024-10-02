@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Header
 from uuid import UUID, uuid4
 from typing import Dict
 from pydantic import BaseModel, Field
-from models import StatusCreate,StatusUpdate
+from models import StatusCreate,StatusUpdate,Status
 from dependencies import get_current_admin,get_current_time,statuses,orders_db
 
 router = APIRouter()
@@ -12,35 +12,26 @@ router = APIRouter()
 async def create_status(status: StatusCreate, admin: bool = Depends(get_current_admin)):
 # Check if the status is unique or not
     try:
-        for names in statuses.values():
-            if names['name'].lower() == status.name.lower():
-                raise HTTPException(status_code=400, detail="Status name must be unique.")
-        status_id=uuid4()
-        new_status = {
-            "id": status_id,
-            "name": status.name,
-            "created_at": get_current_time(),
-            "updated_at": get_current_time(),
-            }
-        statuses[status_id] = new_status
-        return new_status
+        if status.name.lower() in statuses:
+            raise HTTPException(status_code=400, detail="Status name must be unique.")
+        
+        new_status = Status(name=status.name)
+        statuses[new_status.id] = new_status
+        return new_status.to_dict()
+    
     except HTTPException as e:
         raise e(status_code=400, detail="Bad Request")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal Server Error")
 """Get the status by the ID"""
 @router.get("/statuses/{status_id}",status_code=200)
-async def get_user(status_id: UUID):
+async def get_user(status_id: UUID,admin: bool = Depends(get_current_admin)):
     try:
+        status = statuses.get(status_id)
         if status_id not in statuses:
             raise HTTPException(status_code=404, detail="Status not found.")
-        status = statuses[status_id]
-        return {
-            "id": status["id"],
-            "name": status["name"],
-            "created_at": status["created_at"],
-            "updated_at": status["updated_at"]
-        }
+        return status.to_dict()
+    
 # Handle multiple Exceptions (403, 404)
     except HTTPException as e:
         raise e
@@ -54,20 +45,13 @@ async def update_status(status_id: UUID,status_update: StatusUpdate,admin: bool 
         status = statuses.get(status_id)
         if not status:
             raise HTTPException(status_code=404, detail="Status not found")
-        for names in statuses.values():
-            if names['id'] != status_id and names['name'].lower() == status_update.name.lower():
-                raise HTTPException(status_code=400, detail="Status name must be unique.")
+        if any(
+            existing_status['name'].lower() == status_update.name.lower() and existing_status['id'] != status_id for existing_status in statuses.values()):
+            raise HTTPException(status_code=400, detail="Status name must be unique.")
         
-        updated_status = statuses[status_id]
-        updated_status['name'] = status_update.name
-        updated_status['updated_at'] = get_current_time()
+        status.update(name=status_update.name)
 
-        return {
-            "id": updated_status['id'],
-            "name": updated_status['name'],
-            "created_at": updated_status['created_at'],
-            "updated_at": updated_status['updated_at']
-        }
+        return status.to_dict()
 #Handle multiple Exceptions
     except HTTPException as e:
         raise e
