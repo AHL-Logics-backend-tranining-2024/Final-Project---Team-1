@@ -8,6 +8,7 @@ load_dotenv()
 
 
 
+
 password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$"
 
 class UserBaseModel(BaseModel):
@@ -50,18 +51,3 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[UUID] = None
-
-#User Update Request Model
-class UserUpdateRequestModel(BaseModel):
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-
-class UserUpdateResponseModel(BaseModel):
-    id: UUID
-    username: str
-    email: str
-    is_admin: bool = False
-    is_active: bool = True
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="User creation timestamp.")
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="Last updated timestamp.")

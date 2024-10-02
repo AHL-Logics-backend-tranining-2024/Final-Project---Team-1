@@ -76,5 +76,3 @@ async def get_user_by_username(username: str) -> User:
             detail="User not found",
         )
     return user
-
-
