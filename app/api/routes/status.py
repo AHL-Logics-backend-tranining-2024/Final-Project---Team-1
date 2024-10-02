@@ -27,14 +27,14 @@ async def create_status(status: StatusCreate, admin: bool = Depends(get_current_
 @router.get("/statuses/{status_id}",status_code=200)
 async def get_user(status_id: UUID,admin: bool = Depends(get_current_admin)):
     try:
-        status = statuses.get(status_id)
         if status_id not in statuses:
             raise HTTPException(status_code=404, detail="Status not found.")
+        status = statuses.get(status_id)
         return status.to_dict()
     
 # Handle multiple Exceptions (403, 404)
     except HTTPException as e:
-        raise e
+        raise e(status_code=404, detail="Not Found")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal Server Error")
     
@@ -54,7 +54,9 @@ async def update_status(status_id: UUID,status_update: StatusUpdate,admin: bool 
         return status.to_dict()
 #Handle multiple Exceptions
     except HTTPException as e:
-        raise e
+        raise e(status_code=404, detail="Not Found")
+    except HTTPException as e:
+        raise e(status_code=400, detail="Bad Request")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal Server Error")
 """Delete the Status by ID"""
@@ -72,6 +74,6 @@ async def remove_status(status_id: UUID,admin: bool = Depends(get_current_admin)
         return {"detail": "Status successfully deleted."}
 # Handle multiple Exceptions (403, 400, 404)
     except HTTPException as e:
-        raise e
+        raise e(status_code=404, detail="Not Found")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal Server Error") 
