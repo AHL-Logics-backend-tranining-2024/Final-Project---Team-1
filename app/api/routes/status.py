@@ -52,9 +52,6 @@ async def update_status(status_id: UUID,status_update: StatusUpdate,admin: bool 
         status.update(name=status_update.name)
 
         return status.to_dict()
-#Handle multiple Exceptions
-    except HTTPException as e:
-        raise e(status_code=404, detail="Not Found")
     except HTTPException as e:
         raise e(status_code=400, detail="Bad Request")
     except Exception as e:
