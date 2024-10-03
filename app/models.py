@@ -10,12 +10,33 @@ load_dotenv()
 
 
 password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$"
+class Status:
+    def __init__(self, name: str):
+        self.id = uuid4()  
+        self.name = name
+        self.created_at = datetime.utcnow()
+        self.updated_at = self.created_at
+        
+    def update(self, name: str):
+        self.name = name
+        self.updated_at = datetime.utcnow()
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
 class UserBaseModel(BaseModel):
     username: str = Field(..., description="The username of the user.")
     email: EmailStr = Field(..., description="The email address of the user.")
 
+class StatusCreate(BaseModel):
+    name:str=Field(...,description="Status name example (pending, processing, completed, canceled)")
 
+class StatusUpdate(BaseModel):
+    name :str=Field(...,description="Updated status name")
 #Inheriting from UserBaseModel
 class UserCreateRequestModel(UserBaseModel):
     password: str = Field(
