@@ -65,3 +65,7 @@ class UserUpdateResponseModel(BaseModel):
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="User creation timestamp.")
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="Last updated timestamp.")
+
+class ChangeRoleRequest(BaseModel):
+    user_id: UUID
+    is_admin: bool

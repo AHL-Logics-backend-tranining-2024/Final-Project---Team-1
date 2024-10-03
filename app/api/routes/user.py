@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.api.routes.dependencies import get_current_user
-from models import UserCreateRequestModel, User, UserCreateResponseModel, UserUpdateRequestModel, UserUpdateResponseModel 
+from app.api.routes.dependencies import get_current_active_user, get_current_admin, get_current_user
+from models import ChangeRoleRequest, UserCreateRequestModel, User, UserCreateResponseModel, UserUpdateRequestModel, UserUpdateResponseModel 
 from api.auth_utlis import get_password_hash, is_valid_password
 
 router = APIRouter()
@@ -81,8 +81,9 @@ async def get_user_details(user_id: UUID, current_user: User = Depends(get_curre
 
 
 
+#UPDATE user detail
 @router.put("/users/{user_id}", response_model=UserUpdateResponseModel)
-async def update_user(user_id: UUID, update_data: UserUpdateRequestModel, current_user: User = Depends(get_current_user)):
+async def update_user(user_id: UUID, update_data: UserUpdateRequestModel, current_user: User = Depends(get_current_active_user)):
 
     #Authenticated user is trying to update their own information
     if str(user_id) != str(current_user.id):
@@ -119,3 +120,91 @@ async def update_user(user_id: UUID, update_data: UserUpdateRequestModel, curren
         created_at=user.created_at,
         updated_at=user.updated_at
     )
+
+
+
+#DELETE User
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(user_id: UUID, current_user: User = Depends(get_current_user)):
+    
+    if str(user_id) != str(current_user.id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own account.")
+
+    user = users_db.get(str(user_id))
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    """
+    This part will be for checking active orders
+    """
+
+    del users_db[str(user_id)]
+    #Return 204 no content
+    return
+
+
+#GET all users 
+@router.get("/users", response_model=list[UserCreateResponseModel], status_code=status.HTTP_200_OK)
+async def get_all_users(current_admin: User = Depends(get_current_admin)):
+
+    try:
+        all_users = list(users_db.values())
+
+        return [
+            UserUpdateResponseModel(
+                id=user.id,
+                username=user.username,
+                email=user.email,
+                is_admin=user.is_admin,
+                is_active=user.is_active,
+                created_at=user.created_at,
+                updated_at=user.updated_at
+            )
+            for user in all_users
+        ]
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while retrieving users: {str(e)}"
+        )
+    
+
+
+#List orders for a user 
+@router.get("/users/{user_id}/orders", status_code=status.HTTP_200_OK)
+async def list_user_orders(user_id: UUID, current_user: User = Depends(get_current_active_user)):
+    
+    if str(user_id) != str(current_user.id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own orders.")
+    
+    """
+        Code in progress
+
+    """
+
+
+#Change role 
+@router.put("/users/change_role", status_code=status.HTTP_200_OK)
+async def change_role(request: ChangeRoleRequest, current_admin: User = Depends(get_current_admin)):
+
+    try:
+        user = users_db.get(str(request.user_id))
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+        user.is_admin = request.is_admin
+        users_db[str(request.user_id)] = user  
+
+        return {"message": "User role updated successfully."}
+    
+    except HTTPException as http_exc:
+        raise http_exc
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while updating the user role: {str(e)}"
+        )
+    
+
