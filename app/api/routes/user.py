@@ -103,8 +103,6 @@ async def update_user(user_id: UUID, update_data: UserUpdateRequestModel, curren
         user.username = update_data.username
 
     if update_data.password:
-        if not is_valid_password(update_data.password):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password does not meet the security requirements.")
         user.hashed_password = get_password_hash(update_data.password)
 
     user.updated_at = datetime.now(timezone.utc)
@@ -163,10 +161,10 @@ async def get_all_users(current_admin: User = Depends(get_current_admin)):
             for user in all_users
         ]
 
-    except Exception as e:
+    except :
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while retrieving users: {str(e)}"
+            detail=f"An error occurred while retrieving users."
         )
     
 
@@ -198,13 +196,12 @@ async def change_role(request: ChangeRoleRequest, current_admin: User = Depends(
 
         return {"message": "User role updated successfully."}
     
-    except HTTPException as http_exc:
-        raise http_exc
+
     
-    except Exception as e:
+    except Exception :
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while updating the user role: {str(e)}"
+            detail=f"An error occurred while updating the user role."
         )
     
 

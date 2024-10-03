@@ -52,14 +52,4 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def is_valid_password(password: str) -> bool:
-    min_length = 8
-    if len(password) < min_length:
-        return False
-    
-    has_upper = re.search(r'[A-Z]', password) is not None
-    has_lower = re.search(r'[a-z]', password) is not None
-    has_digit = re.search(r'[0-9]', password) is not None
-    has_special = re.search(r'[@#$%]', password) is not None
-    
-    return all([has_upper, has_lower, has_digit, has_special])
+

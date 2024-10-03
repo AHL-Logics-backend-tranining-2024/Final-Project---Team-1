@@ -55,8 +55,12 @@ class TokenData(BaseModel):
 class UserUpdateRequestModel(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
-    password: Optional[str] = None
-
+    password: str = Field(
+        ...,
+        min_length=8,
+        pattern=password_regex,
+        description="Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
+    )
 class UserUpdateResponseModel(BaseModel):
     id: UUID
     username: str
