@@ -5,6 +5,7 @@ from app.api.routes.dependencies import get_current_active_user, get_current_adm
 from models import ChangeRoleRequest, UserCreateRequestModel, User, UserCreateResponseModel, UserUpdateRequestModel, UserUpdateResponseModel 
 from api.auth_utlis import get_password_hash, is_valid_password
 
+
 router = APIRouter()
 
 
@@ -204,4 +205,5 @@ async def change_role(request: ChangeRoleRequest, current_admin: User = Depends(
             detail=f"An error occurred while updating the user role."
         )
     
+
 
