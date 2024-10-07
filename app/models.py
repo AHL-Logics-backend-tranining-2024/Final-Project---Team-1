@@ -95,3 +95,13 @@ class UserUpdateResponseModel(BaseModel):
 class ChangeRoleRequest(BaseModel):
     user_id: UUID
     is_admin: bool
+
+
+class GetUserResponseModel(BaseModel):
+    id: UUID
+    username: str
+    email: EmailStr
+    is_admin: bool
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime

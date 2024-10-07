@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.routes.dependencies import get_current_active_user, get_current_admin, get_current_user
-from models import ChangeRoleRequest, UserCreateRequestModel, User, UserCreateResponseModel, UserUpdateRequestModel, UserUpdateResponseModel 
+from models import ChangeRoleRequest, GetUserResponseModel, UserCreateRequestModel, User, UserCreateResponseModel, UserUpdateRequestModel, UserUpdateResponseModel 
 from api.auth_utlis import get_password_hash, is_valid_password
 
 
@@ -50,7 +50,7 @@ async def create_user(user: UserCreateRequestModel):
 
 
 #Get User Details
-@router.get("/users/{user_id}", response_model=UserCreateResponseModel, status_code=status.HTTP_200_OK)
+@router.get("/users/{user_id}", response_model=GetUserResponseModel, status_code=status.HTTP_200_OK)
 async def get_user_details(user_id: UUID, current_user: User = Depends(get_current_user)):
     #Fetch the user
     user = users_db.get(str(user_id))
@@ -69,7 +69,7 @@ async def get_user_details(user_id: UUID, current_user: User = Depends(get_curre
         )
     
     # Return user details, excluding sensitive fields like password
-    return UserUpdateResponseModel(
+    return GetUserResponseModel(
         id=user.id,
         username=user.username,
         email=user.email,
@@ -143,14 +143,14 @@ async def delete_user(user_id: UUID, current_user: User = Depends(get_current_us
 
 
 #GET all users 
-@router.get("/users", response_model=list[UserCreateResponseModel], status_code=status.HTTP_200_OK)
+@router.get("/users", response_model=list[GetUserResponseModel], status_code=status.HTTP_200_OK)
 async def get_all_users(current_admin: User = Depends(get_current_admin)):
 
     try:
         all_users = list(users_db.values())
 
         return [
-            UserUpdateResponseModel(
+            GetUserResponseModel(
                 id=user.id,
                 username=user.username,
                 email=user.email,
