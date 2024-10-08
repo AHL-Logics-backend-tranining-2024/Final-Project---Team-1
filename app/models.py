@@ -74,5 +74,35 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     user_id: Optional[UUID] = None
 
+#User Update Request Model
+class UserUpdateRequestModel(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: str = Field(
+        ...,
+        min_length=8,
+        pattern=password_regex,
+        description="Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
+    )
+class UserUpdateResponseModel(BaseModel):
+    id: UUID
+    username: str
+    email: str
+    is_admin: bool = False
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="User creation timestamp.")
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="Last updated timestamp.")
+
+class ChangeRoleRequest(BaseModel):
+    user_id: UUID
+    is_admin: bool
 
 
+class GetUserResponseModel(BaseModel):
+    id: UUID
+    username: str
+    email: EmailStr
+    is_admin: bool
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
