@@ -2,9 +2,11 @@ import re
 from typing import Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timedelta, timezone
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt
 from dotenv import load_dotenv
+from decimal import Decimal
 load_dotenv()
+from api.routes.dependencies import get_current_time
 
 
 
@@ -106,3 +108,54 @@ class GetUserResponseModel(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+class Product:
+    def __init__(self, name: str, description: Optional[str], price: float, stock: int, is_available: bool = True):
+        self.id = uuid4()  
+        self.name = name
+        self.description = description
+        self.price = price
+        self.stock = stock
+        self.is_available = is_available
+        self.created_at = get_current_time()  
+        self.updated_at = self.created_at  
+    
+    def update(self, name: Optional[str], description: Optional[str], price: Optional[float], stock: Optional[int], is_available: Optional[bool]):
+        if name is not None:
+            self.name = name
+        if description is not None:
+            self.description = description
+        if price is not None:
+            self.price = price
+        if stock is not None:
+            self.stock = stock
+        if is_available is not None:
+            self.is_available = is_available
+        self.updated_at = get_current_time()
+    
+    def to_dict(self):
+        return {
+            # Convert UUID to string
+            "id": str(self.id), 
+            "name": self.name,
+            "description": self.description,
+            "price": self.price,
+            "stock": self.stock,
+            "is_available": self.is_available,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+        
+class ProductCreate(BaseModel):
+    name: str = Field(..., description="Name of the product.")
+    price: condecimal(gt=0, decimal_places=2) = Field(..., gt=0, description="Price of the product.Must be a positive decimal")
+    description: Optional[str] = Field(None, description="Description of the product.")
+    stock: int = Field(..., ge=0, description="The available stock of the product.")
+    is_available: bool = Field(True, description="Is the product available for sale?") 
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = Field(None, description="Name of the product.")
+    price: Optional[condecimal(gt=0, decimal_places=2)] = Field(None, gt=0, description="Price of the product. Must be a positive decimal.")
+    description: Optional[str] = Field(None, description="Description of the product.")
+    stock: Optional[int] = Field(None, ge=0, description="The available stock of the product.")
+    is_available: Optional[bool] = Field(None, description="Is the product available for sale?")
