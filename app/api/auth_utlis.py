@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import re
 from uuid import UUID
 from jose import JWTError, jwt
 from typing import Optional
@@ -50,3 +51,5 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+

@@ -78,6 +78,8 @@ async def get_user_by_username(username: str) -> User:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
+
+
     return user
 
 def get_current_time():
