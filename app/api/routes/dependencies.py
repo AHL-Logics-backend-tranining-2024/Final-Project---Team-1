@@ -1,6 +1,6 @@
 from typing import Dict
 from fastapi import Depends, HTTPException, status
-from models import TokenData, User,Status 
+from models import TokenData, User,Status,Product 
 from api.auth_utlis import verify_token, oauth2_scheme
 from user import users_db  
 from uuid import UUID
@@ -11,6 +11,7 @@ from datetime import datetime
 users_db: Dict[str, User] = {}
 statuses: Dict[UUID, Status] = {}
 orders_db: Dict[UUID, Dict] = {}
+products_db: Dict[UUID, Product] = {}
 
 #Dependency to get the current user
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
@@ -81,7 +82,7 @@ async def get_user_by_username(username: str) -> User:
 
 
     return user
-
+# Get the time 
 def get_current_time():
     return datetime.utcnow().isoformat()
 
