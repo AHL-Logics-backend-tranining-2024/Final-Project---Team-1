@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt
 from dotenv import load_dotenv
+from fastapi import Query
 from decimal import Decimal
 load_dotenv()
 from api.routes.dependencies import get_current_time
@@ -159,3 +160,13 @@ class ProductUpdate(BaseModel):
     description: Optional[str] = Field(None, description="Description of the product.")
     stock: Optional[int] = Field(None, ge=0, description="The available stock of the product.")
     is_available: Optional[bool] = Field(None, description="Is the product available for sale?")
+
+class ProductSearchParams(BaseModel):
+    name: Optional[str] = Query(None, description="Partial or full product name")
+    min_price: Optional[Decimal] = Query(None, description="Minimum price")
+    max_price: Optional[Decimal] = Query(None, description="Maximum price")
+    isAvailable: Optional[bool] = Query(None, description="Filter by availability")
+    page: int = Query(1, ge=1, description="Page number for pagination")
+    page_size: int = Query(20, ge=1, le=100, description="Number of products per page")
+    sort_by: str = Query("name", description="Sort by field")
+    sort_order: str = Query("asc", description="Sort order: asc or desc")

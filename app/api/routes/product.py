@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from typing import Dict, Optional
 from pydantic import BaseModel, Field
 from dependencies import get_current_time,get_current_admin,products_db
-from models import Product,ProductCreate,ProductUpdate
+from models import Product,ProductCreate,ProductUpdate,ProductSearchParams
 
 
 
@@ -12,8 +12,7 @@ router = APIRouter()
 """Create a Product"""
 @router.post("/products/", status_code=201)
 async def create_product(product: ProductCreate, admin: bool = Depends(get_current_admin)):
-    if not admin:
-        raise HTTPException(status_code=403, detail="Operation not permitted.")
+    
     if product.name.lower() in products_db:
         raise HTTPException(status_code=400, detail=f"Product name '{product.name}' already exists. Please use a unique name.")
     
@@ -35,40 +34,49 @@ async def create_product(product: ProductCreate, admin: bool = Depends(get_curre
 async def get_product_details(product_id: UUID, admin: bool = Depends(get_current_admin)):
     try:
         product_uuid = UUID(product_id)
+        product = products_db.get(product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Product with ID {product_id} not found.")
     except ValueError:
         raise HTTPException(status_code=400,detail="Product ID must be a valid integer." )
-    product = products_db.get(product_id)
-    if not product:
-        raise HTTPException(status_code=404, detail=f"Product with ID {product_id} not found.")
     
     return product
 
 """Update products by the ID"""
 @router.put("/products/{product_id}", status_code=200 ,response_model=Product)
 async def update_product(product_id: UUID,update_data: ProductUpdate,admin: bool = Depends(get_current_admin)):
-    product = products_db.get(product_id)
-    if not product:
+    
+    try:
+        product = products_db.get(product_id)
         raise HTTPException(status_code=404,detail=f"Product with ID {product_id} not found.")
-    if update_data.name:
-        if any(existing_product['name'].lower() == update_data.name.lower() for existing_product in products_db.values()):
-            raise HTTPException(status_code=400,detail=f"Product name '{update_data.name}' already exists. Please use a unique name.")
+        if update_data.name:
+            if any(existing_product['name'].lower() == update_data.name.lower() for existing_product in products_db.values()):
+                raise HTTPException(status_code=400,detail=f"Product name '{update_data.name}' already exists. Please use a unique name.")
         product.name = update_data.name
-    if update_data.price is not None:
-        if update_data.price < 0:
-            raise HTTPException(status_code=400,detail="Price must be a non-negative number.")
+        if update_data.price is not None:
+            if update_data.price < 0:
+                raise HTTPException(status_code=400,detail="Price must be a non-negative number.")
         product.price = update_data.price
-    if update_data.stock is not None:
-        if update_data.stock < 0:
-            raise HTTPException(status_code=400,detail="Stock must be a non-negative number.")
+        if update_data.stock is not None:
+            if update_data.stock < 0:
+                raise HTTPException(status_code=400,detail="Stock must be a non-negative number.")
         product.stock = update_data.stock
+    except Exception as e:
+        raise (e) 
+    
 
 """Delete product by the ID"""
 @router.delete("/products/{product_id}", status_code=200)
 async def delete_product(product_id: UUID):
-    if product_id not in products_db:
-        raise HTTPException(status_code=404,detail=f"Product with ID {product_id} not found.")
-    del products_db[product_id]
-    return {"message": "Product deleted successfully"}
+    try:
+        if product_id not in products_db:
+            raise HTTPException(status_code=404, detail=f"Product with ID {product_id} not found.")
+        del products_db[product_id]
+        return {"message": "Product deleted successfully"}
+    except KeyError:
+        raise HTTPException(status_code=500, detail="An error occurred while deleting the product.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 """ List Products"""
 @router.get("/products", status_code=200)
@@ -89,16 +97,6 @@ async def list_products():
         }
         products_list.append(product_dict)
     return products_list
-
-class ProductSearchParams(BaseModel):
-    name: Optional[str] = Query(None, description="Partial or full product name")
-    min_price: Optional[Decimal] = Query(None, description="Minimum price")
-    max_price: Optional[Decimal] = Query(None, description="Maximum price")
-    isAvailable: Optional[bool] = Query(None, description="Filter by availability")
-    page: int = Query(1, ge=1, description="Page number for pagination")
-    page_size: int = Query(20, ge=1, le=100, description="Number of products per page")
-    sort_by: str = Query("name", description="Sort by field")
-    sort_order: str = Query("asc", description="Sort order: asc or desc")
     
 """ Search for Product"""
 @router.get("/products/search",status_code=200,response_model=dict)
