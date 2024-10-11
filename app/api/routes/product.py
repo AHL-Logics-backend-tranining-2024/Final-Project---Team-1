@@ -54,13 +54,9 @@ async def update_product(product_id: UUID,update_data: ProductUpdate,admin: bool
                 raise HTTPException(status_code=400,detail=f"Product name '{update_data.name}' already exists. Please use a unique name.")
         product.name = update_data.name
         if update_data.price is not None:
-            if update_data.price < 0:
-                raise HTTPException(status_code=400,detail="Price must be a non-negative number.")
-        product.price = update_data.price
+            product.price = update_data.price
         if update_data.stock is not None:
-            if update_data.stock < 0:
-                raise HTTPException(status_code=400,detail="Stock must be a non-negative number.")
-        product.stock = update_data.stock
+            product.stock = update_data.stock
     except Exception as e:
         raise (e) 
     
