@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt
@@ -170,3 +170,39 @@ class ProductSearchParams(BaseModel):
     page_size: int = Query(20, ge=1, le=100, description="Number of products per page")
     sort_by: str = Query("name", description="Sort by field")
     sort_order: str = Query("asc", description="Sort order: asc or desc")
+
+
+class ProductOrder(BaseModel):
+    product_id: UUID = Field(..., description="The ID of the product being ordered.")
+    quantity: int = Field(..., ge=1, description="The quantity of the product being ordered.")
+
+class OrderCreateRequest(BaseModel):
+    products: List[ProductOrder] = Field(..., description="List of products to order.")
+
+class OrderCreateResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: float
+    created_at: datetime
+
+class OrderDetailResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: float
+    created_at: datetime
+    updated_at: datetime
+    products: List[ProductOrder]
+
+
+class UpdateOrderStatusRequest(BaseModel):
+    status: str = Field(..., description="New status of the order", pattern="^(pending|processing|completed|canceled)$")
+
+class OrderUpdateResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: float
+    created_at: datetime
+    updated_at: Optional[datetime]
