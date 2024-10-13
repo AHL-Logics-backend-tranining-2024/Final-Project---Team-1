@@ -1,209 +1,110 @@
-from datetime import datetime, timezone
-from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.api.routes.dependencies import get_current_active_user, get_current_admin, get_current_user
-from models import ChangeRoleRequest, GetUserResponseModel, UserCreateRequestModel, User, UserCreateResponseModel, UserUpdateRequestModel, UserUpdateResponseModel 
-from api.auth_utlis import get_password_hash, is_valid_password
-
+from sqlalchemy import UUID
+from sqlalchemy.orm import Session
+from app.api.routes import dependencies
+from app.services import user_service
+from ... import models,schemas, database
 
 router = APIRouter()
 
-
-users_db = {}
-
-#Create User
-@router.post("/users/", response_model=UserCreateResponseModel, status_code=status.HTTP_201_CREATED)
-async def create_user(user: UserCreateRequestModel):
-
-    #Check if the email already exists
-    for existing_user in users_db.values():
-        if existing_user.email == user.email:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered."
-            )
-        
-    #Create User
-    hashed_password = get_password_hash(user.password)
-
-    new_user = User(
-        id=uuid4(),
-        username=user.username,
-        email=user.email,
-        hashed_password=hashed_password,
-        is_admin=False,  #Default is_admin
-        is_active=True,  #Default is_active
-        created_at=datetime.now(timezone.utc)
-    )
-    users_db[str(new_user.id)] = new_user  
-
-    #Return the created user without the password
-    return UserCreateResponseModel(
-        id=new_user.id,
-        username=new_user.username,
-        email=new_user.email,
-        is_admin=new_user.is_admin,
-        is_active=new_user.is_active,
-        created_at=new_user.created_at
-    )
+@router.post("/users/", response_model=schemas.UserCreateResponseModel, status_code=status.HTTP_201_CREATED)
+def create_user(user: schemas.UserCreateRequestModel, db: Session = Depends(database.get_db)):
+   return user_service.create_user(db=db,user=user)  
 
 
+@router.get("/users/{user_id}", response_model=schemas.GetUserResponseModel, status_code=status.HTTP_200_OK)
+async def get_user_details(
+    user_id: UUID, 
+    db: Session = Depends(database.get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    user = user_service.get_user_by_id(user_id, db)
 
-#Get User Details
-@router.get("/users/{user_id}", response_model=GetUserResponseModel, status_code=status.HTTP_200_OK)
-async def get_user_details(user_id: UUID, current_user: User = Depends(get_current_user)):
-    #Fetch the user
-    user = users_db.get(str(user_id))
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found."
-        )
-    
-    #Check if the current user is an admin or the user themselves
     if not current_user.is_admin and current_user.id != user.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this user's details."
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Access denied."
         )
+    return schemas.GetUserResponseModel(user)
+
     
-    # Return user details, excluding sensitive fields like password
-    return GetUserResponseModel(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        is_admin=user.is_admin,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        updated_at=user.updated_at
-    )
+
+@router.put("/users/{user_id}", response_model=schemas.UserUpdateResponseModel, status_code=status.HTTP_200_OK)
+async def update_user(
+    user_id: UUID,
+    update_data: schemas.UserUpdateRequestModel,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(dependencies.get_current_active_user)
+):
+
+    # Ensure users can only update their own details unless they are admin
+    if user_id != current_user.id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="You are not authorized to update this user."
+        )
+
+    updated_user = user_service.update_user_in_db(user_id, update_data, db)
+
+    return schemas.UserUpdateResponseModel(updated_user)
 
 
-
-
-#UPDATE user detail
-@router.put("/users/{user_id}", response_model=UserUpdateResponseModel)
-async def update_user(user_id: UUID, update_data: UserUpdateRequestModel, current_user: User = Depends(get_current_active_user)):
-
-    #Authenticated user is trying to update their own information
-    if str(user_id) != str(current_user.id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only update your own details.")
-    
-    user = users_db.get(str(user_id))
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
-    
-    #Validate and update the email if provided
-    if update_data.email:
-        if any(existing_user.email == update_data.email for existing_user in users_db.values() if existing_user.id != user_id):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered.")
-        user.email = update_data.email
-
-    if update_data.username:
-        user.username = update_data.username
-
-    if update_data.password:
-        user.hashed_password = get_password_hash(update_data.password)
-
-    user.updated_at = datetime.now(timezone.utc)
-
-    users_db[str(user.id)] = user
-
-    return UserUpdateResponseModel(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        is_admin=user.is_admin,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        updated_at=user.updated_at
-    )
-
-
-
-#DELETE User
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: UUID, current_user: User = Depends(get_current_user)):
-    
-    if str(user_id) != str(current_user.id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own account.")
+async def delete_user(
+    user_id: UUID,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(dependencies.get_current_active_user)
+):
+    # Ensure users can only delete their own account
+    if user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="You are not authorized to delete this user."
+        )
 
-    user = users_db.get(str(user_id))
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+    user_service.delete_user_from_db(user_id, db)
 
-    """
-    This part will be for checking active orders
-    """
-
-    del users_db[str(user_id)]
-    #Return 204 no content
-    return
+    return None 
 
 
-#GET all users 
-@router.get("/users", response_model=list[GetUserResponseModel], status_code=status.HTTP_200_OK)
-async def get_all_users(current_admin: User = Depends(get_current_admin)):
+
+@router.get("/users", response_model=list[schemas.GetUserResponseModel], status_code=status.HTTP_200_OK)
+def get_users(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(dependencies.get_current_active_user)
+):
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this resource."
+        )
 
     try:
-        all_users = list(users_db.values())
-
-        return [
-            GetUserResponseModel(
-                id=user.id,
-                username=user.username,
-                email=user.email,
-                is_admin=user.is_admin,
-                is_active=user.is_active,
-                created_at=user.created_at,
-                updated_at=user.updated_at
-            )
-            for user in all_users
-        ]
-
-    except :
+        users = user_service.get_all_users(db)
+        return users
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while retrieving users."
+            detail="An error occurred while retrieving users."
         )
     
+"""
+Dont Forget List order for user
+"""
 
-
-#List orders for a user 
-@router.get("/users/{user_id}/orders", status_code=status.HTTP_200_OK)
-async def list_user_orders(user_id: UUID, current_user: User = Depends(get_current_active_user)):
-    
-    if str(user_id) != str(current_user.id):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own orders.")
-    
-    """
-        Code in progress
-
-    """
-
-
-#Change role 
 @router.put("/users/change_role", status_code=status.HTTP_200_OK)
-async def change_role(request: ChangeRoleRequest, current_admin: User = Depends(get_current_admin)):
-
+def change_role(
+    request: schemas.ChangeRoleRequest,
+    current_user: models.User = Depends(dependencies.get_current_user),
+    db: Session = Depends(database.get_db)):
+    # Ensure current user is an admin
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="You do not have permission to perform this action.")
+    
     try:
-        user = users_db.get(str(request.user_id))
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
-
-        user.is_admin = request.is_admin
-        users_db[str(request.user_id)] = user  
-
+        user_service.change_user_role(request.user_id, request.is_admin, db)
         return {"message": "User role updated successfully."}
-    
-
-    
-    except Exception :
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while updating the user role."
-        )
-    
-
-
+    except HTTPException as e:
+        raise e
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
