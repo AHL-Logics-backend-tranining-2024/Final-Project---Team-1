@@ -168,3 +168,11 @@ class ProductSearchParams(BaseModel):
     page_size: int = Query(20, ge=1, le=100, description="Number of products per page")
     sort_by: str = Query("name", description="Sort by field")
     sort_order: str = Query("asc", description="Sort order: asc or desc")
+    
+class StatusCreate(BaseModel):
+    name: str
+class StatusUpdate(BaseModel):
+    name: Optional[str]
+
+    class Config:
+        orm_mode = True

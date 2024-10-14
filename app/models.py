@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4,UUID
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
+from sqlalchemy import Column, String, Text, Float, Integer, Boolean, UUID
 from sqlalchemy import Boolean, Column, DateTime, String, func
 from .database import Base
 from pydantic import BaseModel,Field 
@@ -34,38 +36,15 @@ class Status(Base):
             "updated_at": self.updated_at,
         }
 
-class StatusCreate(BaseModel):
-    name: str
+class Product(Base):
+    __tablename__ = "products"
 
-class StatusUpdate(BaseModel):
-    name: str
+    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    name = Column(String(255), unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    price = Column(Float, nullable=False)
+    stock = Column(Integer, nullable=False)
+    is_available = Column(Boolean, default=True)
 
-
-class ProductCreate(BaseModel):
-    name: str
-    description: Optional[str] = None
-    price: float
-    stock: int
-    is_available: Optional[bool] = True
-
-class ProductUpdate(BaseModel):
-    name: Optional[str]
-    price: Optional[float]
-    stock: Optional[int]
-
-class ProductSearchParams(BaseModel):
-    name: Optional[str] = None
-    min_price: Optional[float] = None
-    max_price: Optional[float] = None
-    is_available: Optional[bool] = None
-    page: Optional[int] = 1
-    page_size: Optional[int] = 10
-    sort_by: Optional[str] = "name"
-    sort_order: Optional[str] = "asc"
-    
-class ProductUpdate(BaseModel):
-    name: Optional[str] = Field(None, description="The name of the product.")
-    description: Optional[str] = Field(None, description="The description of the product.")
-    price: Optional[float] = Field(None, description="The price of the product.")
-    stock: Optional[int] = Field(None, description="The stock quantity of the product.")
-    is_available: Optional[bool] = Field(None, description="Indicates if the product is available.")
+    def __repr__(self):
+        return f"<Product(name={self.name}, price={self.price}, stock={self.stock}, is_available={self.is_available})>"
