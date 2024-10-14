@@ -77,7 +77,15 @@ def search_products(search_params: schemas.ProductSearchParams, db: Session) -> 
     if search_params.is_available is not None:
         query = query.filter(models.Product.is_available == search_params.is_available)
 
+    # Sorting
+    if search_params.sort_by in ["created_at", "updated_at", "price"]:
+        if search_params.sort_order == "desc":
+            query = query.order_by(getattr(models.Product, search_params.sort_by).desc())
+        else:
+            query = query.order_by(getattr(models.Product, search_params.sort_by))
+
     products = query.all()
     if not products:
         raise HTTPException(status_code=404, detail="No products match the search criteria.")
+    
     return products

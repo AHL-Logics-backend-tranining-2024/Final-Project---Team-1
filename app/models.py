@@ -28,14 +28,6 @@ class Status(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    def to_dict(self):
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-        }
-
 class Product(Base):
     __tablename__ = "products"
 

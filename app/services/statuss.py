@@ -37,10 +37,10 @@ def delete_status(db: Session, status_id: str):
     # Retrieve the status by ID
     status = get_status_by_id(db, status_id)
     
-    # Check if any orders are using this status
+    # TODO: Check if any orders are using this status before deleting it
     order_in_use = db.query(models.Order).filter(models.Order.status_id == status_id).first()
     if order_in_use:
         raise HTTPException(status_code=400, detail="Cannot delete status. It is currently in use by an order.")
+    
     db.delete(status)
     db.commit()
-    return {"detail": "Status successfully deleted."}

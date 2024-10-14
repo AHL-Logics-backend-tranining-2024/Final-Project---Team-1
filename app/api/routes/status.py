@@ -3,7 +3,7 @@ from uuid import UUID
 from schemas import StatusCreate, StatusUpdate
 from models import Status
 from dependencies import get_current_admin
-from services.status_service import create_status_service,get_status_by_id_service,update_status_service,delete_status_service
+from services.statuss import create_status_service,get_status_by_id_service,update_status_service,delete_status_service
 
 router = APIRouter()
 
@@ -45,7 +45,6 @@ async def update_status(status_id: UUID, status_update: StatusUpdate, admin: boo
 async def delete_status(status_id: UUID, admin: bool = Depends(get_current_admin)):
     try:
         delete_status_service(status_id)
-        return {"detail": "Status successfully deleted."}
     except HTTPException as e:
         raise e
     except Exception as e:

@@ -1,10 +1,11 @@
-from typing import Optional
+from typing import Optional,List
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt
 from fastapi import Query
 from decimal import Decimal
 from app.api.routes.dependencies import get_current_time
+
 
 
 
@@ -159,15 +160,16 @@ class ProductUpdate(BaseModel):
     stock: Optional[int] = Field(None, ge=0, description="The available stock of the product.")
     is_available: Optional[bool] = Field(None, description="Is the product available for sale?")
 
+
 class ProductSearchParams(BaseModel):
-    name: Optional[str] = Query(None, description="Partial or full product name")
-    min_price: Optional[Decimal] = Query(None, description="Minimum price")
-    max_price: Optional[Decimal] = Query(None, description="Maximum price")
-    isAvailable: Optional[bool] = Query(None, description="Filter by availability")
-    page: int = Query(1, ge=1, description="Page number for pagination")
-    page_size: int = Query(20, ge=1, le=100, description="Number of products per page")
-    sort_by: str = Query("name", description="Sort by field")
-    sort_order: str = Query("asc", description="Sort order: asc or desc")
+    name: Optional[str] = Field(None, description="Filter products by name")
+    min_price: Optional[float] = Field(None, description="Minimum price filter")
+    max_price: Optional[float] = Field(None, description="Maximum price filter")
+    is_available: Optional[bool] = Field(None, description="Filter by availability")
+    page: int = Field(1, description="Page number for pagination")
+    page_size: int = Field(10, description="Number of items per page")
+    sort_by: str = Field("created_at", description="Field to sort by")
+    sort_order: str = Field("asc", description="Order of sorting: asc or desc")
     
 class StatusCreate(BaseModel):
     name: str
