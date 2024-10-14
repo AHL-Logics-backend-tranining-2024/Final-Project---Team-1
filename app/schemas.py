@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt
@@ -55,6 +55,10 @@ class UserCreateResponseModel(UserBaseModel):
     is_active: bool = Field(default=True, description="Account active status.")
     created_at: datetime
 
+    class config:
+        orm_mode = True
+
+
 #Inheriting from UserBaseModel
 class User(UserBaseModel):
     id: UUID = Field(default_factory=uuid4)
@@ -64,16 +68,8 @@ class User(UserBaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="User creation timestamp.")
     updated_at: datetime = Field(default=None, description="Last updated timestamp.")
 
-    
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    user_id: Optional[UUID] = None
+    class config:
+        orm_mode = True
 
 #User Update Request Model
 class UserUpdateRequestModel(BaseModel):
@@ -85,6 +81,7 @@ class UserUpdateRequestModel(BaseModel):
         pattern=password_regex,
         description="Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character."
     )
+
 class UserUpdateResponseModel(BaseModel):
     id: UUID
     username: str
@@ -93,6 +90,9 @@ class UserUpdateResponseModel(BaseModel):
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="User creation timestamp.")
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),description="Last updated timestamp.")
+
+    class config:
+        orm_mode = True
 
 class ChangeRoleRequest(BaseModel):
     user_id: UUID
@@ -107,6 +107,68 @@ class GetUserResponseModel(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+
+
+
+class ProductOrder(BaseModel):
+    product_id: UUID = Field(..., description="The ID of the product being ordered.")
+    quantity: int = Field(..., ge=1, description="The quantity of the product being ordered.")
+
+class OrderCreateRequest(BaseModel):
+    products: List[ProductOrder] = Field(..., description="List of products to order.")
+
+class OrderCreateResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: float
+    created_at: datetime
+
+    class config:
+        orm_mode = True
+    
+
+class OrderDetailResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: float
+    created_at: datetime
+    updated_at: datetime
+    products: List[ProductOrder]
+    
+    class config:
+        orm_mode = True
+
+
+class UpdateOrderStatusRequest(BaseModel):
+    status: str = Field(..., description="New status of the order", pattern="^(pending|processing|completed|canceled)$")
+
+class OrderUpdateResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    status: str
+    total_price: float
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    class config:
+        orm_mode = True
+
+
+
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    user_id: Optional[UUID] = None
+
 
 class Product:
     def __init__(self, name: str, description: Optional[str], price: float, stock: int, is_available: bool = True):

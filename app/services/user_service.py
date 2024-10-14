@@ -25,15 +25,7 @@ async def create_user(db: Session, user: schemas.UserCreateRequestModel) -> sche
     db.commit()
     db.refresh(new_user)
 
-    return schemas.UserCreateResponseModel(
-        id=new_user.id,
-        username=new_user.username,
-        email=new_user.email,
-        is_admin=new_user.is_admin,
-        is_active=new_user.is_active,
-        created_at=new_user.created_at,
-        updated_at=new_user.updated_at
-    )
+    return new_user
 
 
 

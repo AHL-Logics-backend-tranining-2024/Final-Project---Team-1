@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import UUID
 from sqlalchemy.orm import Session
 from app.api.routes import dependencies
-from app.services import user_service
+from app.services import user_service, order_service
 from ... import models,schemas, database
 
 router = APIRouter()
@@ -88,9 +88,21 @@ def get_users(
             detail="An error occurred while retrieving users."
         )
     
-"""
-Dont Forget List order for user
-"""
+@router.get("/users/{user_id}/orders", response_model=list[schemas.OrderDetailResponse], status_code=status.HTTP_200_OK)
+def list_orders_for_user(
+    user_id: UUID,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(dependencies.get_current_active_user)
+):
+    if user_id != current_user.id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to view these orders."
+        )
+
+    orders = order_service.get_orders_for_user(str(user_id), db)
+    return orders
+
 
 @router.put("/users/change_role", status_code=status.HTTP_200_OK)
 def change_role(
