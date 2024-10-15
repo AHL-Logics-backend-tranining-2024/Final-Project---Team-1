@@ -70,20 +70,11 @@ def delete_product_endpoint(
 @router.get("/products", response_model=List[schemas.Product], status_code=status.HTTP_200_OK)
 def list_products_endpoint(
     db: Session = Depends(database.get_db),
-    name: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    is_available: Optional[bool] = None,
-    page: int = 1,
-    page_size: int = 10,
-    sort_by: str = "created_at",
-    sort_order: str = "asc"
+    page: int = 1,  # Default page is 1
+    page_size: int = 10  # Default page size is 10
 ):
-    products = products.list_products(
-        db, name=name, min_price=min_price, max_price=max_price, is_available=is_available, 
-        page=page, page_size=page_size, sort_by=sort_by, sort_order=sort_order
-    )
-    return products
+    products_list = products.list_products(db, page=page, page_size=page_size)
+    return products_list
 # Endpoint to search for products based on query params
 @router.get("/products/search", response_model=List[schemas.ProductResponse], status_code=status.HTTP_200_OK)
 async def search_products_endpoint(

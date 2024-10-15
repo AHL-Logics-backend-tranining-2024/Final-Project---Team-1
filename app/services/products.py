@@ -59,10 +59,13 @@ def delete_product(product_id: str, db: Session):
     return {"message": "Product deleted successfully"}
 
 # List Products
-def list_products(db: Session) -> List[schemas.Product]:
-    products = db.query(models.Product).all()
+def list_products(db: Session, page: int = 1, page_size: int = 10) -> List[schemas.Product]:
+    offset = (page - 1) * page_size
+    products = db.query(models.Product).offset(offset).limit(page_size).all()
+
     if not products:
         raise HTTPException(status_code=404, detail="No products found.")
+
     return products
 # Search Products
 def search_products(db: Session, filter_query: schemas.ProductSearchParams):
