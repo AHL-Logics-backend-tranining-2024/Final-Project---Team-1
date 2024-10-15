@@ -90,15 +90,8 @@ async def search_products_endpoint(
     filter_query: ProductSearchParams = Depends(),
     db: Session = Depends(database.get_db)
 ):
-    products = products.search_products(
+    products_list = products.search_products(
         db,
-        name=filter_query.name,
-        min_price=filter_query.min_price,
-        max_price=filter_query.max_price,
-        is_available=filter_query.is_available,
-        page=filter_query.page,
-        page_size=filter_query.page_size,
-        sort_by=filter_query.sort_by,
-        sort_order=filter_query.sort_order
+        filter_query=filter_query 
     )
-    return products
+    return products_list

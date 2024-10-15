@@ -65,27 +65,13 @@ def list_products(db: Session) -> List[schemas.Product]:
         raise HTTPException(status_code=404, detail="No products found.")
     return products
 # Search Products
-def search_products(search_params: schemas.ProductSearchParams, db: Session) -> List[schemas.Product]:
-    query = db.query(models.Product)
-
-    if search_params.min_price is not None:
-        query = query.filter(models.Product.price >= search_params.min_price)
-
-    if search_params.max_price is not None:
-        query = query.filter(models.Product.price <= search_params.max_price)
-
-    if search_params.is_available is not None:
-        query = query.filter(models.Product.is_available == search_params.is_available)
-
-    # Sorting
-    if search_params.sort_by in ["created_at", "updated_at", "price"]:
-        if search_params.sort_order == "desc":
-            query = query.order_by(getattr(models.Product, search_params.sort_by).desc())
-        else:
-            query = query.order_by(getattr(models.Product, search_params.sort_by))
-
-    products = query.all()
-    if not products:
-        raise HTTPException(status_code=404, detail="No products match the search criteria.")
-    
-    return products
+def search_products(db: Session, filter_query: schemas.ProductSearchParams):
+    name = filter_query.name
+    min_price = filter_query.min_price
+    max_price = filter_query.max_price
+    is_available = filter_query.is_available
+    page = filter_query.page
+    page_size = filter_query.page_size
+    sort_by = filter_query.sort_by
+    sort_order = filter_query.sort_order
+    pass
