@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from ... import models,schemas, database
@@ -17,8 +17,12 @@ def create_order_endpoint(
     return new_order
 
 @router.get("/orders/{order_id}", response_model=schemas.OrderDetailResponse, status_code=status.HTTP_200_OK)
-def get_order_endpoint(order_id: str, db: Session = Depends(database.get_db)):
+def get_order_endpoint(order_id: str, db: Session = Depends(database.get_db), current_user: dict = Depends(dependencies.get_current_user)):
     order = order_service.get_order_by_id(order_id, db)
+
+    if not current_user["is_admin"] and order.user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="You do not have permission to view this order.")
+
     return order
 
 @router.put("/orders/{order_id}/status", response_model=schemas.OrderUpdateResponse, status_code=status.HTTP_200_OK)
@@ -37,5 +41,10 @@ def cancel_order_endpoint(
     db: Session = Depends(database.get_db), 
     current_user: dict = Depends(dependencies.get_current_user)
 ):
+    order = order_service.get_order_by_id(order_id, db)
+
+    if not current_user["is_admin"] and order.user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="You do not have permission to cancel this order.")
+
     order_service.cancel_order(order_id, db)
-    return None
+    return {"message": f"Order {order_id} has been successfully canceled."}

@@ -84,6 +84,7 @@ def cancel_order(order_id: str, db: Session):
         raise HTTPException(status_code=500, detail="Status 'canceled' not found")
     order.status_id = status.id
     db.commit()
+    return {"message": f"Order {order_id} has been successfully canceled."}
 
 
 
