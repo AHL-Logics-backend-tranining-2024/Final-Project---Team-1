@@ -1,26 +1,63 @@
 from typing import List
+import uuid
 from sqlalchemy.orm import Session
 from fastapi import HTTPException , status
 from .. import models, schemas
 
-def create_order(db: Session, user_id: str, order_data: schemas.OrderCreateRequest):
+
+def calculate_total_price(db: Session, products):
+    total_price = 0
+
+    for product_data in products:
+        product = db.query(models.Product).filter(models.Product.id == product_data.product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Product {product_data.product_id} not found.")
+        
+        if not product.is_available:
+            raise HTTPException(
+                status_code=400, detail=f"Product '{product.name}' is currently unavailable."
+            )
+
+        if product.stock < product_data.quantity:
+            raise HTTPException(
+                status_code=400, detail=f"Insufficient stock for product '{product.name}'."
+            )
+
+        total_price += product.price * product_data.quantity
+
+    return total_price
+
+def add_order_products(db: Session, order_id: uuid.UUID, products):
+    for product_data in products:
+        order_product = models.OrderProduct(
+            order_id=order_id,
+            product_id=product_data.product_id,
+            quantity=product_data.quantity,
+        )
+        db.add(order_product)
+
+        # Update the stock of the product
+        product = db.query(models.Product).filter(models.Product.id == product_data.product_id).first()
+        product.stock -= product_data.quantity
+
+    db.commit()
+
+def create_order(db: Session, user_id: uuid.UUID, order_data: schemas.OrderCreateRequest):
     status = db.query(models.OrderStatus).filter(models.OrderStatus.name == "pending").first()
     if not status:
-        raise HTTPException(status_code=500, detail="Default status 'pending' not found")
+        raise HTTPException(status_code=500, detail="Default status 'pending' not found.")
 
-    total_price = sum([product.quantity for product in order_data.products])  # Example price logic
+    total_price = calculate_total_price(db, order_data.products)
+
     new_order = models.Order(user_id=user_id, status_id=status.id, total_price=total_price)
-
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
 
-    for product in order_data.products:
-        order_product = models.OrderProduct(order_id=new_order.id, product_id=product.product_id, quantity=product.quantity)
-        db.add(order_product)
+    add_order_products(db, new_order.id, order_data.products)
 
-    db.commit()
     return new_order
+
 
 def get_order_by_id(order_id: str, db: Session):
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
