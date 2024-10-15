@@ -105,3 +105,6 @@ def change_user_role(user_id: UUID, is_admin: bool, db: Session) -> None:
     user.is_admin = is_admin
     db.commit()
 
+
+def get_user_by_id(user_id: str, db: Session) -> models.User | None:
+    return db.query(models.User).filter(models.User.id == user_id).first()

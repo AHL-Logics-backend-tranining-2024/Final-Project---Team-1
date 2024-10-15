@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from models import User
 from auth_utlis import verify_token, oauth2_scheme
 from database import get_db  
+from app.services import user_service
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
@@ -11,12 +12,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+
     try:
-        # Verify the token and extract the user ID
         user_id = verify_token(token, credentials_exception)
 
-        # Query the database to fetch the user
-        user = db.query(User).filter(User.id == user_id).first()
+        user = user_service.get_user_by_id(user_id, db)
         if user is None:
             raise credentials_exception
 
