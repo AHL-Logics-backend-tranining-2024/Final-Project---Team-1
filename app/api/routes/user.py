@@ -70,16 +70,9 @@ async def delete_user(
 
 @router.get("/users", response_model=list[schemas.GetUserResponseModel], status_code=status.HTTP_200_OK)
 def get_users(
-    user_id: UUID,
     db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(dependencies.get_current_active_user)
+    current_user: models.User = Depends(dependencies.get_current_admin)  
 ):
-    if user_id != current_user.id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this resource."
-        )
-
     try:
         users = user_service.get_all_users(db)
         return users
@@ -114,7 +107,5 @@ def change_role(
     try:
         user_service.change_user_role(request.user_id, request.is_admin, db)
         return {"message": "User role updated successfully."}
-    except HTTPException as e:
-        raise e
     except Exception:
         raise HTTPException(status_code=500, detail="Internal Server Error")

@@ -4,8 +4,20 @@ from sqlalchemy import UUID
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from api.auth_utlis import get_password_hash
+from app.services import order_service
 
 
+
+def get_user_by_id(user_id: str, db: Session) -> models.User | None:
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def find_user_by_email_and_id(email: str, exclude_user_id: str, db: Session) -> models.User | None:
+    return (
+        db.query(models.User)
+        .filter(models.User.email == email, models.User.id != exclude_user_id)
+        .first()
+    )
+    
 async def create_user(db: Session, user: schemas.UserCreateRequestModel) -> schemas.UserCreateResponseModel:
     # Check if the email already exists
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
@@ -52,8 +64,7 @@ def update_user_in_db(
         user.username = update_data.username
 
     if update_data.email:
-        # Check if the email is already registered with another user
-        existing_user = db.query(models.User).filter(models.User.email == update_data.email, models.User.id != user_id).first()
+        existing_user = find_user_by_email_and_id(update_data.email, user_id, db)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, 
@@ -78,13 +89,11 @@ def delete_user_from_db(user_id: UUID, db: Session) -> None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
 
     # Check for active orders
-    active_orders = db.query(models.Order).filter(models.Order.user_id == user_id, models.Order.status == "active").first()
-    if active_orders:
+    if order_service.has_active_orders(user_id, db):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, 
             detail="Cannot delete user with active orders."
         )
-
     db.delete(user)
     db.commit()
 
@@ -106,5 +115,3 @@ def change_user_role(user_id: UUID, is_admin: bool, db: Session) -> None:
     db.commit()
 
 
-def get_user_by_id(user_id: str, db: Session) -> models.User | None:
-    return db.query(models.User).filter(models.User.id == user_id).first()

@@ -5,6 +5,36 @@ from fastapi import HTTPException , status
 from .. import models, schemas
 
 
+def has_active_orders(user_id: str, db: Session) -> bool:
+    return (
+        db.query(models.Order)
+        .filter(models.Order.user_id == user_id, models.Order.status == "active")
+        .first()
+        is not None
+    )
+    
+
+def get_product_by_id(product_id: str, db: Session) -> models.Product:
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Product with ID {product_id} not found."
+        )
+    return product
+
+def update_product_stock(product_id: str, quantity: int, db: Session) -> None:
+    product = get_product_by_id(product_id, db)
+
+    if product.stock < quantity:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Insufficient stock for product."
+        )
+
+    product.stock -= quantity
+    db.commit()
+
 def calculate_total_price(db: Session, products):
     total_price = 0
 
@@ -29,16 +59,16 @@ def calculate_total_price(db: Session, products):
 
 def add_order_products(db: Session, order_id: uuid.UUID, products):
     for product_data in products:
+        product = get_product_by_id(product_data.product_id, db)
+
         order_product = models.OrderProduct(
             order_id=order_id,
-            product_id=product_data.product_id,
+            product_id=product.id,
             quantity=product_data.quantity,
         )
         db.add(order_product)
 
-        # Update the stock of the product
-        product = db.query(models.Product).filter(models.Product.id == product_data.product_id).first()
-        product.stock -= product_data.quantity
+        update_product_stock(product.id, product_data.quantity, db)
 
     db.commit()
 
@@ -67,6 +97,11 @@ def get_order_by_id(order_id: str, db: Session):
 
 def update_order_status(order_id: str, status_name: str, db: Session):
     order = get_order_by_id(order_id, db)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order with ID {order_id} not found."
+        )
     status = db.query(models.OrderStatus).filter(models.OrderStatus.name == status_name).first()
     if not status:
         raise HTTPException(status_code=400, detail="Invalid status")
