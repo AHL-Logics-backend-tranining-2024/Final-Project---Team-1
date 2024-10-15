@@ -49,7 +49,7 @@ async def update_user(
     return schemas.UserUpdateResponseModel(updated_user)
 
 
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
 async def delete_user(
     user_id: UUID,
     db: Session = Depends(database.get_db),
@@ -64,16 +64,17 @@ async def delete_user(
 
     user_service.delete_user_from_db(user_id, db)
 
-    return None 
+    return {"message": f"User with ID {user_id} has been successfully deleted."}
 
 
 
 @router.get("/users", response_model=list[schemas.GetUserResponseModel], status_code=status.HTTP_200_OK)
 def get_users(
+    user_id: UUID,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(dependencies.get_current_active_user)
 ):
-    if not current_user.is_admin:
+    if user_id != current_user.id and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access this resource."
@@ -107,12 +108,9 @@ def list_orders_for_user(
 @router.put("/users/change_role", status_code=status.HTTP_200_OK)
 def change_role(
     request: schemas.ChangeRoleRequest,
-    current_user: models.User = Depends(dependencies.get_current_user),
-    db: Session = Depends(database.get_db)):
-    # Ensure current user is an admin
-    if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="You do not have permission to perform this action.")
-    
+    current_user: models.User = Depends(dependencies.get_current_admin),
+    db: Session = Depends(database.get_db)
+):
     try:
         user_service.change_user_role(request.user_id, request.is_admin, db)
         return {"message": "User role updated successfully."}
