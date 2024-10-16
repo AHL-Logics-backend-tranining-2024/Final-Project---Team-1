@@ -16,23 +16,19 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-class Status(Base):
-    __tablename__ = "statuses"
-
-    id = Column(uuid(as_uuid=True), primary_key=True, default=uuid, index=True)
-    name = Column(String(20), unique=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
 class Product(Base):
     __tablename__ = "products"
-@@ -39,3 +32,53 @@ class Product(Base):
+    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    name = Column(String(255), unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    price = Column(Float, nullable=False)
+    stock = Column(Integer, nullable=False)
+    is_available = Column(Boolean, default=True)
 
     def __repr__(self):
         return f"<Product(name={self.name}, price={self.price}, stock={self.stock}, is_available={self.is_available})>"
 
         orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
-
 
 
 class Order(Base):
@@ -71,7 +67,6 @@ class OrderProduct(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=datetime.now(timezone.utc))
 
-    order = relationship("Order", back_populates="products")
 
 class Status(Base):
     __tablename__ = "statuses"
@@ -80,3 +75,5 @@ class Status(Base):
     name = Column(String(20), unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    order = relationship("Order", back_populates="products")
