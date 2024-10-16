@@ -82,3 +82,5 @@ class Status(Base):
     name = Column(String(20), unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    order = relationship("Order", back_populates="products")
