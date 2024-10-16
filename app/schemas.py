@@ -1,4 +1,4 @@
-from typing import Optional,List,Literal
+from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt

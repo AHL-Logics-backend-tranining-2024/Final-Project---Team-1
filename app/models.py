@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4,UUID
-from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
-from sqlalchemy import Column, String, Text, Float, Integer, Boolean, UUID
-from sqlalchemy import Boolean, Column, DateTime, String, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy.orm import relationship
 from .database import Base
 from pydantic import BaseModel,Field 
 from typing import Optional
