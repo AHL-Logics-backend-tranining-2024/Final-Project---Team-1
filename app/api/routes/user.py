@@ -18,13 +18,15 @@ async def get_user_details(
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(dependencies.get_current_user)
 ):
-    user = user_service.get_user_by_id(user_id, db)
 
     if not current_user.is_admin and current_user.id != user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Access denied."
         )
+        
+    user = user_service.get_user_by_id(user_id, db)
+
     return schemas.GetUserResponseModel(user)
 
     
