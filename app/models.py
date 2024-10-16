@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 import uuid
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String,Text,Float 
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String,func
 from sqlalchemy.orm import relationship
 from .database import Base
 from pydantic import BaseModel,Field 
