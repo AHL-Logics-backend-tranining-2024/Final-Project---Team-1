@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
-from uuid import uuid4,UUID
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, func
+import uuid
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String,Text,Float 
 from sqlalchemy.orm import relationship
 from .database import Base
 from pydantic import BaseModel,Field 
@@ -10,7 +10,7 @@ from typing import Optional
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, index=True)
+    id = Column(uuid(as_uuid=True), primary_key=True, default=uuid, unique=True, index=True)
     username = Column(String(50), nullable=False, unique=True, index=True)
     email = Column(String(100), nullable=False, unique=True, index=True)
     hashed_password = Column(String(255), nullable=False)
@@ -22,7 +22,7 @@ class User(Base):
 class Status(Base):
     __tablename__ = "statuses"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
+    id = Column(uuid(as_uuid=True), primary_key=True, default=uuid, index=True)
     name = Column(String(20), unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
