@@ -33,7 +33,7 @@ class Product(Base):
     def __repr__(self):
         return f"<Product(name={self.name}, price={self.price}, stock={self.stock}, is_available={self.is_available})>"
 
-        orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
 
 
