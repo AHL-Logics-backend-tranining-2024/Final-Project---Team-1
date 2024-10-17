@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt
 from fastapi import Query
 from decimal import Decimal
 from app.api.routes.dependencies import get_current_time
+from enum import Enum
 
 
 
@@ -221,12 +222,30 @@ class ProductUpdate(BaseModel):
     stock: Optional[int] = Field(None, ge=0, description="The available stock of the product.")
     is_available: Optional[bool] = Field(None, description="Is the product available for sale?")
 
+# Enum for sort_by options
+class SortByEnum(str, Enum):
+    name = "name"
+    price = "price"
+    created_at = "created_at"
+
+# Enum for sort_order options
+class SortOrderEnum(str, Enum):
+    asc = "asc"
+    desc = "desc"
 class ProductSearchParams(BaseModel):
-    name: Optional[str] = Query(None, description="Partial or full product name")
-    min_price: Optional[Decimal] = Query(None, description="Minimum price")
-    max_price: Optional[Decimal] = Query(None, description="Maximum price")
-    isAvailable: Optional[bool] = Query(None, description="Filter by availability")
-    page: int = Query(1, ge=1, description="Page number for pagination")
-    page_size: int = Query(20, ge=1, le=100, description="Number of products per page")
-    sort_by: str = Query("name", description="Sort by field")
-    sort_order: str = Query("asc", description="Sort order: asc or desc")
+    name: Optional[str] = None
+    min_price: Optional[float] = Field(None, ge=0)
+    max_price: Optional[float] = Field(None, ge=0)
+    is_available: Optional[bool] = None
+    page: int = Field(1, ge=1)
+    page_size: int = Field(10, gt=0, le=100)
+    sort_by: SortByEnum = SortByEnum.created_at  
+    sort_order: SortOrderEnum = SortOrderEnum.asc  
+    
+class StatusCreate(BaseModel):
+    name: str
+class StatusUpdate(BaseModel):
+    name: Optional[str]
+
+    class Config:
+        orm_mode = True
