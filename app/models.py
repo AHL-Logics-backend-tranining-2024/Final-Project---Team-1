@@ -67,13 +67,4 @@ class OrderProduct(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=datetime.now(timezone.utc))
 
-
-class Status(Base):
-    __tablename__ = "statuses"
-
-    id = Column(uuid.UUID(as_uuid=True), primary_key=True, default=uuid, index=True)
-    name = Column(String(20), unique=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
     order = relationship("Order", back_populates="products")
