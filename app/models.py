@@ -18,9 +18,9 @@ class User(Base):
 
 class Product(Base):
     __tablename__ = "products"
-    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    id = Column(uuid.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     name = Column(String(255), unique=True, nullable=False)
-    description = Column(Text, nullable=True)
+    description = Column(String(500), nullable=True)
     price = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False)
     is_available = Column(Boolean, default=True)
@@ -71,7 +71,7 @@ class OrderProduct(Base):
 class Status(Base):
     __tablename__ = "statuses"
 
-    id = Column(uuid(as_uuid=True), primary_key=True, default=uuid, index=True)
+    id = Column(uuid.UUID(as_uuid=True), primary_key=True, default=uuid, index=True)
     name = Column(String(20), unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
