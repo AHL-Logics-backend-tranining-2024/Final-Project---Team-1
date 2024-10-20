@@ -7,6 +7,6 @@ RUN pip install -r requirments.txt
 
 COPY app ./
 
-ENTRYPOINT [ "uvicorn", "fastapi", "run", "main.py" ]
+ENTRYPOINT [ "fastapi", "run", "main.py" ]
 
 
