@@ -2,9 +2,6 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from pydantic import BaseModel, EmailStr, Field, condecimal, PositiveInt
-from fastapi import Query
-from decimal import Decimal
-from app.api.routes.dependencies import get_current_time
 from enum import Enum
 
 
@@ -17,12 +14,12 @@ class Status:
     def __init__(self, name: str):
         self.id = uuid4()  
         self.name = name
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(timezone.utc)
         self.updated_at = self.created_at
         
     def update(self, name: str):
         self.name = name
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def to_dict(self):
         return {
@@ -161,16 +158,6 @@ class OrderUpdateResponse(BaseModel):
 
 
 
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    user_id: Optional[UUID] = None
-
-
 class Product:
     def __init__(self, name: str, description: Optional[str], price: float, stock: int, is_available: bool = True):
         self.id = uuid4()  
@@ -249,3 +236,13 @@ class StatusUpdate(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    user_id: Optional[UUID] = None

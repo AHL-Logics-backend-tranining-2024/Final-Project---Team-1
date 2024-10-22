@@ -7,6 +7,8 @@ from api.auth_utlis import get_password_hash
 from app.services import order_service
 
 
+def get_user_by_username(username: str, db: Session) -> models.User | None:
+    return db.query(models.User).filter(models.User.username == username).first()
 
 def get_user_by_id(user_id: str, db: Session) -> models.User | None:
     return db.query(models.User).filter(models.User.id == user_id).first()

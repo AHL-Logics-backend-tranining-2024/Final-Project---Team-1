@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 import uuid
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import relationship
 from .database import Base
-from pydantic import BaseModel,Field
-from typing import Optional
+
 class User(Base):
     __tablename__ = "users"
     id = Column(uuid(as_uuid=True), primary_key=True, default=uuid, unique=True, index=True)
@@ -22,17 +21,15 @@ class User(Base):
 
 class Product(Base):
     __tablename__ = "products"
-    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    id = Column(uuid.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     name = Column(String(255), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     price = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False)
     is_available = Column(Boolean, default=True)
 
-    def __repr__(self):
-        return f"<Product(name={self.name}, price={self.price}, stock={self.stock}, is_available={self.is_available})>"
 
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    order_products = relationship("OrderProduct", back_populates="product", cascade="all, delete-orphan")
 
 
 class Order(Base):
@@ -72,27 +69,4 @@ class OrderProduct(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=datetime.now(timezone.utc))
 
     order = relationship("Order", back_populates="products")
-
-class Product(Base):
-    __tablename__ = "products"
-    id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
-    name = Column(String(255), unique=True, nullable=False)
-    description = Column(Text, nullable=True)
-    price = Column(Float, nullable=False)
-    stock = Column(Integer, nullable=False)
-    is_available = Column(Boolean, default=True)
-
-    def __repr__(self):
-        return f"<Product(name={self.name}, price={self.price}, stock={self.stock}, is_available={self.is_available})>"
-
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
-
-class Status(Base):
-    __tablename__ = "statuses"
-
-    id = Column(uuid(as_uuid=True), primary_key=True, default=uuid, index=True)
-    name = Column(String(20), unique=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    order = relationship("Order", back_populates="products")
+    product = relationship("Product", back_populates="order_products")
