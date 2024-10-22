@@ -3,13 +3,11 @@ from uuid import UUID
 from jose import JWTError, jwt
 from typing import Optional
 from fastapi.security import OAuth2PasswordBearer
-from dotenv import load_dotenv
 from passlib.context import CryptContext
 from pydantic import BaseSettings
 
 
 
-load_dotenv()
 
 # Define the OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
